@@ -1,3 +1,93 @@
 
+body {
+    background-color: aquamarine;
+    text-align: center;
+    font-family: 'Ubuntu', sans-serif;
+}
 
-hh
+
+button {
+    display: inline-block;
+    border: none;
+    padding: 1rem 2rem;
+    margin: 0 10px;
+    text-decoration: none;
+    background: #FF7FAA;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background 250ms ease-in-out, 
+                transform 150ms ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border-radius: 5%;
+}
+
+button:hover {
+    background: #ef1049;
+    transform: scale(1.1);
+}
+
+.select-player button:focus {
+    background: #ef1049;
+    transform: scale(1.1);
+}
+
+button:active {
+    transform: scale(0.99);
+}
+
+h1 {
+    font-size: 3.5rem; 
+}
+
+h1, .section {
+    margin: 2.5rem auto; 
+}
+
+.section p {
+    font-size: 1.5rem;
+    padding-top: 10px;
+}
+
+#gameboard {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid black;
+    width: 420px;
+    height: 420px;
+}
+
+.board-block {
+    width: 138px;
+    height: 138px;
+    border: 1px solid black;
+}
+
+@media (max-width: 450px) {
+    #gameboard {
+        width: 300px;
+        height: 300px;
+      }
+
+    .board-block {
+        width: 98px;
+        height: 98px;
+    }
+}
+
+@media (max-width: 320px) {
+    #gameboard {
+        width: 240px;
+        height: 240px;
+      }
+
+    .board-block {
+        width: 78px;
+        height: 78px;
+    }
+}
+
+
