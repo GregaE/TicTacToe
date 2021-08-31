@@ -25,7 +25,7 @@ const Gameboard = (() => {
             cell = document.createElement('div');
             cell.setAttribute("class","board-block");
             cell.setAttribute("id",index);
-            cell.addEventListener("click", Game.play.bind(null, index));
+            cell.addEventListener("click", Game.play);
             boardContainer.appendChild(cell)
         });
     }
@@ -49,8 +49,10 @@ const Gameboard = (() => {
 
     function deactivate () {
         let blocks = document.getElementsByClassName("board-block");
-        let index;
-        Array.prototype.forEach.call(blocks, block => block.removeEventListener("click", Game.play.bind(null, index)))
+        // Array.prototype.forEach.call(blocks, (block, index) => block.removeEventListener("click", Game.play.bind(null, index)))
+        for (let i = 0; i < blocks.length; i++) {
+            blocks[i].removeEventListener("click", Game.play);
+        }
     }
 
 
@@ -107,7 +109,11 @@ const Game = (() => {
         }
     }
 
-    function play (cell) {
+    function play (event) {
+        event.target.removeEventListener("click", Game.play)
+
+        let cell = event.target.id;
+
         if (isMarked(cell) !== "") {
             if (currentPlayer === Player1) {
                 currentPlayer = Player2;
@@ -117,14 +123,17 @@ const Game = (() => {
             Gameboard.update(cell, currentPlayer.playerType);
 
             if (getWinner() === "X") {
-                pronounceWinner("X")
+                pronounceWinner("X");
+                Gameboard.deactivate()
             }
             else if (getWinner() === "O") {
-                pronounceWinner("O")
+                pronounceWinner("O");
+                Gameboard.deactivate()
             }
             else if (Gameboard.fetch().every(cell => cell.marked !== "")){
                 // gameOver
                 pronounceTie()
+                Gameboard.deactivate()
             }
         }
     }
@@ -172,7 +181,6 @@ Gameboard.render()
 
 console.log(Gameboard.fetch())
 
-Gameboard.deactivate()
 
 
 
