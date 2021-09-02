@@ -18,14 +18,14 @@ button {
     font-size: 1.5rem;
     cursor: pointer;
     text-align: center;
-    transition: background 250ms ease-in-out, 
+    transition: background 250ms ease-in-out,
                 transform 150ms ease;
     -webkit-appearance: none;
     -moz-appearance: none;
     border-radius: 5%;
 }
 
-button:hover {
+button:hover, .active {
     background: #ef1049;
     transform: scale(1.1);
 }
@@ -40,11 +40,11 @@ button:active {
 }
 
 h1 {
-    font-size: 3.5rem; 
+    font-size: 3.5rem;
 }
 
 h1, .section {
-    margin: 2.5rem auto; 
+    margin: 2.5rem auto;
 }
 
 .section p {
@@ -64,6 +64,28 @@ h1, .section {
     width: 138px;
     height: 138px;
     border: 1px solid black;
+    line-height: 138px;
+    font-size: 80px;
+    font-weight: 500;
+}
+
+.marked {
+    animation: mark 1s ease-out both;
+}
+
+.winner {
+    animation: win 1s ease-out both;
+}
+
+@keyframes mark {
+    0%   {font-size: 5px;}
+    100%  {font-size: 80px;}
+}
+
+@keyframes win {
+    0%   {font-size: 80px;}
+    100%  {font-size: 90px;
+    color:#ef1049}
 }
 
 @media (max-width: 450px) {

@@ -37,7 +37,9 @@ const Gameboard = (() => {
     function update(cell, fill) {
         gameBoard[cell].marked = fill;
         console.log(gameBoard[cell].marked)
+        document.getElementById(cell).classList.add("marked")
         document.getElementById(cell).innerHTML = fill;
+
     }
 
     function reset () {
@@ -49,9 +51,15 @@ const Gameboard = (() => {
 
     function deactivate () {
         let blocks = document.getElementsByClassName("board-block");
-        // Array.prototype.forEach.call(blocks, (block, index) => block.removeEventListener("click", Game.play.bind(null, index)))
         for (let i = 0; i < blocks.length; i++) {
             blocks[i].removeEventListener("click", Game.play);
+        }
+    }
+
+    function highlightWinner (sequence) {
+        for (let i = 0; i < sequence.length; i++) {
+            document.getElementById(sequence[i]).classList.add("winner")
+
         }
     }
 
@@ -61,7 +69,8 @@ const Gameboard = (() => {
         update,
         render,
         reset,
-        deactivate
+        deactivate,
+        highlightWinner
     };
 })();
 
@@ -71,8 +80,8 @@ const Player = (name, playerType) => {
     return { name, playerType };
 };
 
-const Player1 = Player("computer", "X");
-const Player2 = Player("computer", "O");
+const Player1 = Player("computer", "O");
+const Player2 = Player("computer", "X");
 let currentPlayer = Player1;
 
 
@@ -96,13 +105,29 @@ const Game = (() => {
             }
         }
 
-        const winCombos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
-        let xWin = winCombos.some(combo => combo.every(number => xArray.includes(number)));
-        let oWin = winCombos.some(combo => combo.every(number => oArray.includes(number)));
+        let winCombo;
+
+        let xWin = combos.some(function (combo) {
+            if(combo.every(number => xArray.includes(number))){
+                winCombo = combo;
+                Gameboard.highlightWinner(winCombo)
+                return true;
+            }
+        });
+
+        let oWin = combos.some(function (combo) {
+            if(combo.every(number => oArray.includes(number))){
+                winCombo = combo;
+                Gameboard.highlightWinner(winCombo)
+                return true;
+            }
+        });
 
         if (xWin){
             return "X"
+
         }
         else if (oWin){
             return "O"
@@ -114,28 +139,69 @@ const Game = (() => {
 
         let cell = event.target.id;
 
-        if (isMarked(cell) !== "") {
-            if (currentPlayer === Player1) {
-                currentPlayer = Player2;
-            } else {
-                currentPlayer = Player1;
-            }
-            Gameboard.update(cell, currentPlayer.playerType);
-
-            if (getWinner() === "X") {
-                pronounceWinner("X");
-                Gameboard.deactivate()
-            }
-            else if (getWinner() === "O") {
-                pronounceWinner("O");
-                Gameboard.deactivate()
-            }
-            else if (Gameboard.fetch().every(cell => cell.marked !== "")){
-                // gameOver
-                pronounceTie()
-                Gameboard.deactivate()
+        function mark (index) {
+            if (isMarked(index) !== "") {
+                if (currentPlayer === Player1) {
+                    currentPlayer = Player2;
+                } else {
+                    currentPlayer = Player1;
+                }
+                Gameboard.update(index, currentPlayer.playerType);
             }
         }
+
+        mark(cell)
+
+        if (getWinner() === "X") {
+            pronounceWinner("X");
+            Gameboard.deactivate()
+        }
+        else if (getWinner() === "O") {
+            pronounceWinner("O");
+            Gameboard.deactivate()
+        }
+        else if (Gameboard.fetch().every(cell => cell.marked !== "")){
+            // gameOver
+            pronounceTie()
+            Gameboard.deactivate()
+        }
+        else {
+            setTimeout(
+                function(){
+                    mark(getRandom())
+
+                    if (getWinner() === "X") {
+                        pronounceWinner("X");
+                        Gameboard.deactivate()
+                    }
+                    else if (getWinner() === "O") {
+                        pronounceWinner("O");
+                        Gameboard.deactivate()
+                    }
+                    else if (Gameboard.fetch().every(cell => cell.marked !== "")){
+                        // gameOver
+                        pronounceTie()
+                        Gameboard.deactivate()
+                    }
+                }, 600);
+        }
+
+    }
+
+    // computer picks a random empty field
+    function getRandom () {
+        // filter out marked squares
+        let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
+        let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
+        return Gameboard.fetch().indexOf(random)
+    }
+
+    // computer picks the optimal empty field
+    function getOptimal () {
+        // filter out marked squares
+        let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
+        let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
+        return Gameboard.fetch().indexOf(random)
     }
 
     // cache DOM
@@ -146,18 +212,16 @@ const Game = (() => {
     // Events
 
     restartButton.addEventListener("click", restart)
-    selectButtons.forEach(button => {
-        button.addEventListener("click", assignPlayer);
-    });
+    // selectButtons.forEach(button => {
+    //     button.addEventListener("click", assignPlayer);
+    // });
 
     // Functions
 
-    function assignPlayer() {
-
-    }
 
     function restart() {
         Gameboard.reset()
+        currentPlayer = Player1;
         console.log(Gameboard.fetch())
     }
 
