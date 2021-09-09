@@ -30,10 +30,6 @@ button:hover, .active {
     transform: scale(1.1);
 }
 
-.select-player button:focus {
-    background: #ef1049;
-    transform: scale(1.1);
-}
 
 button:active {
     transform: scale(0.99);
@@ -70,16 +66,21 @@ h1, .section {
 }
 
 .marked {
-    animation: mark 1s ease-out both;
+    animation: mark 0.8s ease-out both;
 }
 
 .winner {
-    animation: win 1s ease-out both;
+    animation: win 0.8s ease-out both;
 }
 
-@keyframes mark {
-    0%   {font-size: 5px;}
-    100%  {font-size: 80px;}
+.deactivate {
+    animation: blur 0.8s ease-out both !important;
+    animation-delay: 3s;
+}
+
+@keyframes blur {
+    0%   {-webkit-filter: blur(0px)}
+    100%  {-webkit-filter: blur(10px)}
 }
 
 @keyframes win {
@@ -87,6 +88,12 @@ h1, .section {
     100%  {font-size: 90px;
     color:#ef1049}
 }
+
+@keyframes mark {
+    0%   {font-size: 5px;}
+    100%  {font-size: 80px;}
+}
+
 
 @media (max-width: 450px) {
     #gameboard {
@@ -112,4 +119,22 @@ h1, .section {
     }
 }
 
+#result {
+    width: 420px;
+    height: 420px;
+    position: fixed;
+    font-size: 4rem;
+    line-height: 400px;
+    z-index: -1;
+    text-transform: capitalize;
+    opacity: 0;
+}
 
+.reveal {
+    animation: reveal 0.8s ease-out 0.8s both !important;
+
+}
+
+@keyframes reveal {
+    100%  {opacity: 1;}
+}

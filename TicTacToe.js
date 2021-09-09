@@ -7,7 +7,6 @@ const Gameboard = (() => {
 
     let gameBoard = [];
 
-
     // cache DOM
 
     const boardContainer = document.querySelector("#gameboard");
@@ -36,24 +35,28 @@ const Gameboard = (() => {
 
     function update(cell, fill) {
         gameBoard[cell].marked = fill;
-        console.log(gameBoard[cell].marked)
         document.getElementById(cell).classList.add("marked")
         document.getElementById(cell).innerHTML = fill;
-
+        document.getElementById(cell).removeEventListener("click", Game.play)
     }
 
     function reset () {
-        boardContainer.innerHTML = "";
+        boardContainer.innerHTML = `<div id="result">
+        </div>`;
         gameBoard = []
         render()
-        console.log(gameBoard)
     }
 
     function deactivate () {
         let blocks = document.getElementsByClassName("board-block");
         for (let i = 0; i < blocks.length; i++) {
             blocks[i].removeEventListener("click", Game.play);
+            setTimeout(function(){ blocks[i].classList.add("deactivate"); }, 1000)
+
         }
+        setTimeout(function() {
+            document.getElementById("result").classList.add("reveal");
+        }, 1000)
     }
 
     function highlightWinner (sequence) {
@@ -62,7 +65,6 @@ const Gameboard = (() => {
 
         }
     }
-
 
     return {
         fetch,
@@ -76,12 +78,12 @@ const Gameboard = (() => {
 
 /// PLAYERS OBJECT - factory
 
-const Player = (name, playerType) => {
-    return { name, playerType };
+const Player = (name, type) => {
+    return { name, type };
 };
 
-const Player1 = Player("computer", "O");
-const Player2 = Player("computer", "X");
+const Player1 = Player("player", "X");
+const Player2 = Player("computer", "O");
 let currentPlayer = Player1;
 
 
@@ -89,23 +91,156 @@ let currentPlayer = Player1;
 
 const Game = (() => {
 
+    // GAME PROGRESS AND CONTROLS
+
+    function play (event) {
+
+        let cell = event.target.id;
+        mark(cell)
+
+        if (getWinner(Gameboard.fetch()) === "X") {
+            pronounceWinner(Player1.type === "X" ? Player1.name : Player2.name);
+            Gameboard.deactivate()
+        }
+        else if (getWinner(Gameboard.fetch()) === "O") {
+            pronounceWinner(Player1.type === "O" ? Player1.name : Player2.name);
+            Gameboard.deactivate()
+        }
+        else if (Gameboard.fetch().every(cell => cell.marked !== "")){
+            pronounceTie()
+            Gameboard.deactivate()
+        }
+        else {
+            setTimeout(
+                function(){
+                    mark(getRandom());
+
+                    if (getWinner(Gameboard.fetch()) === "X") {
+                        pronounceWinner(Player1.type === "X" ? Player1.name : Player2.name);
+                        Gameboard.deactivate()
+                    }
+                    else if (getWinner(Gameboard.fetch()) === "O") {
+                        pronounceWinner(Player1.type === "O" ? Player1.name : Player2.name);
+                        Gameboard.deactivate()
+                    }
+                    else if (Gameboard.fetch().every(cell => cell.marked !== "")){
+                        pronounceTie()
+                        Gameboard.deactivate()
+                    }
+                }, 600);
+        }
+
+    }
+
+    function switchPlayer (event) {
+        if (event.target.id === "o-play") {
+            if (!Gameboard.fetch().every(cell => cell.marked === "")) {
+                restart()
+            }
+            mark(getRandom());
+            Player1.name = "computer";
+            Player2.name = "player"
+            document.getElementById("x-play").classList.remove("active");
+            document.getElementById("o-play").removeEventListener("click", switchPlayer);
+            document.getElementById("o-play").classList.add("active");
+            document.getElementById("x-play").addEventListener("click", switchPlayer);
+        }
+        else {
+            Player1.name = "player";
+            Player2.name = "computer"
+            document.getElementById("x-play").classList.add("active");
+            document.getElementById("o-play").addEventListener("click", switchPlayer);
+            document.getElementById("o-play").classList.remove("active");
+            document.getElementById("x-play").removeEventListener("click", switchPlayer);
+            restart()
+        }
+    }
+
+    function restart() {
+        Gameboard.reset()
+        currentPlayer = Player1;
+        if (document.getElementById("o-play").classList.contains("active")) {
+            mark(getRandom())
+        }
+    }
+
+    // Update gameboard array helper functions
+
     function isMarked (cell) {
         return Gameboard.fetch()[cell].marked === ""
     }
 
-    function getWinner () {
-        let xArray = [];
-        let oArray = [];
+    function mark (index) {
+        if (isMarked(index) !== "") {
+            Gameboard.update(index, currentPlayer.type);
+            if (currentPlayer === Player1) {
+                currentPlayer = Player2;
+            } else {
+                currentPlayer = Player1;
+            }
+        }
+    }
+
+    // COMPUTER AI
+
+    // computer picks a random empty field
+    function getRandom () {
+        // filter out marked squares
+        let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
+        let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
+        return Gameboard.fetch().indexOf(random)
+    }
+
+    // computer picks the optimal empty field
+    function getOptimal () {
+        // filter out marked squares
+        let nonMarked = [];
 
         for (let i = 0; i < Gameboard.fetch().length; i++) {
-            if (Gameboard.fetch()[i].marked === "X") {
-                xArray.push(i)
-            } else if (Gameboard.fetch()[i].marked === "O") {
-                oArray.push(i)
+            if(Gameboard.fetch()[i].marked === "") {
+                nonMarked.push(i)
+            }
+        }
+        console.log(Gameboard.fetch());
+
+        // let x = Gameboard.fetch().map(option => findPlacement(option, Gameboard.fetch()))
+
+        function findPlacement (selection, board) {
+            let updatedBoard = board.map(a => ({...a}))
+            updatedBoard[selection].marked = "O";
+
+            if (getWinner(updatedBoard) === "X") {
+                return -10
+            } else if (getWinner(updatedBoard) === "O") {
+                return 10
+            }
+            else if (updatedBoard.every(cell => cell.marked !== "")) {
+                return 0
+            }
+            else {
+                //return findPlacement(selection, updatedBoard)
             }
         }
 
-        const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        return nonMarked.map(selection => findPlacement(selection, Gameboard.fetch()))
+    }
+
+    // DEFINE WINNER
+
+    // Winning Combinations
+    const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+    function getWinner (boardState) {
+        let xArray = [];
+        let oArray = [];
+
+        for (let i = 0; i < boardState.length; i++) {
+            if (boardState[i].marked === "X") {
+                xArray.push(i)
+            } else if (boardState[i].marked === "O") {
+                oArray.push(i)
+            }
+        }
 
         let winCombo;
 
@@ -134,116 +269,38 @@ const Game = (() => {
         }
     }
 
-    function play (event) {
-        event.target.removeEventListener("click", Game.play)
-
-        let cell = event.target.id;
-
-        function mark (index) {
-            if (isMarked(index) !== "") {
-                if (currentPlayer === Player1) {
-                    currentPlayer = Player2;
-                } else {
-                    currentPlayer = Player1;
-                }
-                Gameboard.update(index, currentPlayer.playerType);
-            }
-        }
-
-        mark(cell)
-
-        if (getWinner() === "X") {
-            pronounceWinner("X");
-            Gameboard.deactivate()
-        }
-        else if (getWinner() === "O") {
-            pronounceWinner("O");
-            Gameboard.deactivate()
-        }
-        else if (Gameboard.fetch().every(cell => cell.marked !== "")){
-            // gameOver
-            pronounceTie()
-            Gameboard.deactivate()
-        }
-        else {
-            setTimeout(
-                function(){
-                    mark(getRandom())
-
-                    if (getWinner() === "X") {
-                        pronounceWinner("X");
-                        Gameboard.deactivate()
-                    }
-                    else if (getWinner() === "O") {
-                        pronounceWinner("O");
-                        Gameboard.deactivate()
-                    }
-                    else if (Gameboard.fetch().every(cell => cell.marked !== "")){
-                        // gameOver
-                        pronounceTie()
-                        Gameboard.deactivate()
-                    }
-                }, 600);
-        }
-
+    function pronounceWinner(player) {
+        document.getElementById("result").innerHTML = player + " wins";
     }
 
-    // computer picks a random empty field
-    function getRandom () {
-        // filter out marked squares
-        let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
-        let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
-        return Gameboard.fetch().indexOf(random)
+    function pronounceTie() {
+        document.getElementById("result").innerHTML = "It's a tie";
     }
 
-    // computer picks the optimal empty field
-    function getOptimal () {
-        // filter out marked squares
-        let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
-        let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
-        return Gameboard.fetch().indexOf(random)
-    }
+    // Cache DOM
 
-    // cache DOM
-
-    const selectButtons = document.querySelectorAll(".select-player button")
+    const selectButtons = document.querySelectorAll(".select-player")
     const restartButton = document.getElementById("restart");
 
     // Events
 
     restartButton.addEventListener("click", restart)
-    // selectButtons.forEach(button => {
-    //     button.addEventListener("click", assignPlayer);
-    // });
-
-    // Functions
-
-
-    function restart() {
-        Gameboard.reset()
-        currentPlayer = Player1;
-        console.log(Gameboard.fetch())
-    }
-
-    function pronounceWinner(player) {
-        console.log("you win player " + player)
-    // gameOver - three in a row (789,456,123,741,852,963,753,951)
-    //+ displayWinner OR tie (9 clicks and no 3 in a row)
-    }
-
-    function pronounceTie() {
-        console.log("its a tie")
-    }
+    selectButtons.forEach(button => {
+        button.addEventListener("click", switchPlayer);
+    });
 
     return {
-        play
+        play,
+        getOptimal,
+        pronounceWinner
     };
 })();
 
-
 Gameboard.render()
 
-console.log(Gameboard.fetch())
+
+
+
 
 
 
