@@ -132,7 +132,6 @@ h1, .section {
 
 .reveal {
     animation: reveal 0.8s ease-out 0.8s both !important;
-
 }
 
 @keyframes reveal {

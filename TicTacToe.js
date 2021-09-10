@@ -113,7 +113,7 @@ const Game = (() => {
         else {
             setTimeout(
                 function(){
-                    mark(getRandom());
+                    mark(getOptimal());
 
                     if (getWinner(Gameboard.fetch()) === "X") {
                         pronounceWinner(Player1.type === "X" ? Player1.name : Player2.name);
@@ -137,7 +137,7 @@ const Game = (() => {
             if (!Gameboard.fetch().every(cell => cell.marked === "")) {
                 restart()
             }
-            mark(getRandom());
+            mark(getOptimal());
             Player1.name = "computer";
             Player2.name = "player"
             document.getElementById("x-play").classList.remove("active");
@@ -160,7 +160,7 @@ const Game = (() => {
         Gameboard.reset()
         currentPlayer = Player1;
         if (document.getElementById("o-play").classList.contains("active")) {
-            mark(getRandom())
+          mark(getOptimal())
         }
     }
 
@@ -191,7 +191,7 @@ const Game = (() => {
         return Gameboard.fetch().indexOf(random)
     }
 
-    // computer picks the optimal empty field
+    // computer picks the optimal empty field to win
     function getOptimal () {
         // filter out marked squares
         let nonMarked = [];
@@ -203,26 +203,48 @@ const Game = (() => {
         }
         console.log(Gameboard.fetch());
 
-        // let x = Gameboard.fetch().map(option => findPlacement(option, Gameboard.fetch()))
+        // Iterate through list of possible moves
+        function findOptimal (options, boardState, turn) {
+            let scoreList = options.map(option => getScore(option, boardState, turn, options));
+            let highScore;
 
-        function findPlacement (selection, board) {
-            let updatedBoard = board.map(a => ({...a}))
-            updatedBoard[selection].marked = "O";
+            if (turn === "X") {
+                highScore = Math.max(...scoreList);
+            } else {
+                highScore = Math.min(...scoreList)
+            }
 
-            if (getWinner(updatedBoard) === "X") {
+            return options[scoreList.indexOf(highScore)]
+        }
+
+        // Get score for each possible move
+        function getScore (selection, boardState, turn, options) {
+            // New hypothetical board
+            let updatedBoard = boardState.map(a => ({...a}));
+            updatedBoard[selection].marked = turn;
+            // New list of non marked cells
+            let shallow = options.filter(option => option !== selection);
+
+            // Assign a score if game ends with selection or use recursion to simulate next best move
+            if (getWinner(updatedBoard) === "O") {
                 return -10
-            } else if (getWinner(updatedBoard) === "O") {
+            } else if (getWinner(updatedBoard) === "X") {
                 return 10
             }
             else if (updatedBoard.every(cell => cell.marked !== "")) {
                 return 0
             }
+            else if (turn === "X") {
+                // return getRandom()
+                return getScore(findOptimal(shallow, updatedBoard, "O"), updatedBoard, "O", shallow)
+            }
             else {
-                //return findPlacement(selection, updatedBoard)
+                // return getRandom()
+                return getScore(findOptimal(shallow, updatedBoard, "X"), updatedBoard, "X", shallow)
             }
         }
 
-        return nonMarked.map(selection => findPlacement(selection, Gameboard.fetch()))
+        return findOptimal(nonMarked, Gameboard.fetch(),currentPlayer.type)
     }
 
     // DEFINE WINNER
