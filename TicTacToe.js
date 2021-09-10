@@ -98,11 +98,11 @@ const Game = (() => {
         let cell = event.target.id;
         mark(cell)
 
-        if (getWinner(Gameboard.fetch()) === "X") {
+        if (getWinner(Gameboard.fetch()).type === "X") {
             pronounceWinner(Player1.type === "X" ? Player1.name : Player2.name);
             Gameboard.deactivate()
         }
-        else if (getWinner(Gameboard.fetch()) === "O") {
+        else if (getWinner(Gameboard.fetch()).type === "O") {
             pronounceWinner(Player1.type === "O" ? Player1.name : Player2.name);
             Gameboard.deactivate()
         }
@@ -115,12 +115,12 @@ const Game = (() => {
                 function(){
                     mark(getOptimal());
 
-                    if (getWinner(Gameboard.fetch()) === "X") {
-                        pronounceWinner(Player1.type === "X" ? Player1.name : Player2.name);
+                    if (getWinner(Gameboard.fetch()).type === "X") {
+                        pronounceWinner(Player1.type === "X" ? Player1.name : Player2.name, getWinner(Gameboard.fetch()).winCombo);
                         Gameboard.deactivate()
                     }
-                    else if (getWinner(Gameboard.fetch()) === "O") {
-                        pronounceWinner(Player1.type === "O" ? Player1.name : Player2.name);
+                    else if (getWinner(Gameboard.fetch()).type === "O") {
+                        pronounceWinner(Player1.type === "O" ? Player1.name : Player2.name, getWinner(Gameboard.fetch()).winCombo);
                         Gameboard.deactivate()
                     }
                     else if (Gameboard.fetch().every(cell => cell.marked !== "")){
@@ -184,12 +184,12 @@ const Game = (() => {
     // COMPUTER AI
 
     // computer picks a random empty field
-    function getRandom () {
-        // filter out marked squares
-        let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
-        let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
-        return Gameboard.fetch().indexOf(random)
-    }
+    // function getRandom () {
+    //     // filter out marked squares
+    //     let nonMarked = Gameboard.fetch().filter(cell => cell.marked === "")
+    //     let random = nonMarked[Math.floor(Math.random()*nonMarked.length)]
+    //     return Gameboard.fetch().indexOf(random)
+    // }
 
     // computer picks the optimal empty field to win
     function getOptimal () {
@@ -201,7 +201,6 @@ const Game = (() => {
                 nonMarked.push(i)
             }
         }
-        console.log(Gameboard.fetch());
 
         // Iterate through list of possible moves
         function findOptimal (options, boardState, turn) {
@@ -217,7 +216,7 @@ const Game = (() => {
             return options[scoreList.indexOf(highScore)]
         }
 
-        // Get score for each possible move
+        // Get the score for a possible move
         function getScore (selection, boardState, turn, options) {
             // New hypothetical board
             let updatedBoard = boardState.map(a => ({...a}));
@@ -226,20 +225,18 @@ const Game = (() => {
             let shallow = options.filter(option => option !== selection);
 
             // Assign a score if game ends with selection or use recursion to simulate next best move
-            if (getWinner(updatedBoard) === "O") {
+            if (getWinner(updatedBoard).type === "O") {
                 return -10
-            } else if (getWinner(updatedBoard) === "X") {
+            } else if (getWinner(updatedBoard).type === "X") {
                 return 10
             }
             else if (updatedBoard.every(cell => cell.marked !== "")) {
                 return 0
             }
             else if (turn === "X") {
-                // return getRandom()
                 return getScore(findOptimal(shallow, updatedBoard, "O"), updatedBoard, "O", shallow)
             }
             else {
-                // return getRandom()
                 return getScore(findOptimal(shallow, updatedBoard, "X"), updatedBoard, "X", shallow)
             }
         }
@@ -269,7 +266,6 @@ const Game = (() => {
         let xWin = combos.some(function (combo) {
             if(combo.every(number => xArray.includes(number))){
                 winCombo = combo;
-                Gameboard.highlightWinner(winCombo)
                 return true;
             }
         });
@@ -277,21 +273,24 @@ const Game = (() => {
         let oWin = combos.some(function (combo) {
             if(combo.every(number => oArray.includes(number))){
                 winCombo = combo;
-                Gameboard.highlightWinner(winCombo)
                 return true;
             }
         });
 
         if (xWin){
-            return "X"
+            return {type:"X", winCombo: winCombo}
 
         }
         else if (oWin){
-            return "O"
+            return {type:"O", winCombo: winCombo}
         }
+        else {
+            return {type:"", winCombo: ""}
+    }
     }
 
-    function pronounceWinner(player) {
+    function pronounceWinner(player, winCombo) {
+        Gameboard.highlightWinner(winCombo)
         document.getElementById("result").innerHTML = player + " wins";
     }
 
@@ -313,7 +312,6 @@ const Game = (() => {
 
     return {
         play,
-        getOptimal,
         pronounceWinner
     };
 })();
