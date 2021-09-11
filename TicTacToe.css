@@ -177,3 +177,35 @@ h1, .section {
     }
 }
 
+@media (max-height: 690px) {
+    #gameboard {
+        width: 300px;
+        height: 300px;
+      }
+
+    .board-block {
+        width: 98px;
+        height: 98px;
+        line-height: 98px;
+        font-size: 70px;
+    }
+
+    #result {
+        width: 300px;
+        height: 300px;
+        line-height: 300px;
+        font-size: 30px;
+    }
+
+    @keyframes win {
+        0%   {font-size: 60px;}
+        100%  {font-size: 70px;
+        color:#ef1049}
+    }
+
+    @keyframes mark {
+        0%   {font-size: 5px;}
+        100%  {font-size: 60px;}
+    }
+}
+
